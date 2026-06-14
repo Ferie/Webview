@@ -15,7 +15,7 @@ exports[`App Component Tests Dovrebbe renderizzare correttamente l'applicazione 
     sharedCookiesEnabled={true}
     source={
       {
-        "uri": "https://www.google.it",
+        "uri": "https://ferie.altervista.org/",
       }
     }
     startInLoadingState={true}

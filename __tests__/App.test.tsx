@@ -1,58 +1,70 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
-import App from '../src/app/App'; // Corretto secondo la tua nuova struttura in src
+import { render, fireEvent, screen } from '@testing-library/react-native';
+import App from '../src/app/App';
 
-// 1. Mock di react-native-safe-area-context richiesto per i test di layout
+// Mock di react-native-safe-area-context
 jest.mock('react-native-safe-area-context', () => {
-    const inset = { top: 0, right: 0, bottom: 0, left: 0 };
     return {
         SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
         SafeAreaView: ({ children }: { children: React.ReactNode }) => children,
-        useSafeAreaInsets: () => inset,
+        useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
     };
 });
 
-// 2. Mock completo di react-native-webview per Jest
+// Mock di react-native-webview
 jest.mock('react-native-webview', () => {
     const { View } = require('react-native');
-    return {
-        WebView: (props: any) => {
-            // Simuliamo la WebView usando una View nativa standard accettata da Jest
-            return <View testID={props.testID || 'mocked-webview'} {...props} />;
-        },
-    };
+    return { WebView: (props: any) => <View {...props} /> };
 });
 
-describe('App Component Tests', () => {
+// Mock di expo-web-browser richiesto per i link legali
+jest.mock('expo-web-browser', () => ({
+    openBrowserAsync: jest.fn(),
+}));
 
-    it('Dovrebbe renderizzare correttamente l\'applicazione senza crash', () => {
-        const { toJSON } = render(<App />);
-        expect(toJSON()).toMatchSnapshot();
+describe('App Advanced Features Tests', () => {
+
+    it('Dovrebbe mostrare il pulsante delle impostazioni e permettere lo switch di schermata', () => {
+        const { getByText, queryByText } = render(<App />);
+
+        // All'avvio dovremmo vedere l'icona del browser e l'icona delle impostazioni nella barra
+        const settingsTabButton = getByText('⚙️');
+        expect(settingsTabButton).toBeTruthy();
+
+        // All'avvio la parola "Impostazioni" NON deve essere visibile (siamo nel browser)
+        expect(queryByText('Impostazioni')).toBeNull();
+
+        // Clicchiamo sulla scheda impostazioni
+        fireEvent.press(settingsTabButton);
+
+        // Ora il titolo nativo "Impostazioni" deve comparire a schermo
+        expect(getByText('Impostazioni')).toBeTruthy();
+        expect(getByText('Tema Scuro')).toBeTruthy();
+        expect(getByText('Privacy Policy')).toBeTruthy();
     });
+});
 
-    it('Dovrebbe mostrare la barra di navigazione inferiore', () => {
-        const { getByTestId } = render(<App />);
-        const navBar = getByTestId('nav-bar');
-        expect(navBar).toBeTruthy();
-    });
+describe('App Native Legal Pages Tests', () => {
 
-    it('I pulsanti Avanti e Indietro dovrebbero essere disabilitati all\'avvio (senza cronologia)', () => {
-        const { getByTestId } = render(<App />);
+    it('Dovrebbe permettere di navigare nella Privacy Policy e nei Termini e tornare indietro', () => {
+        const { getByText, queryByText } = render(<App />);
 
-        const backButton = getByTestId('back-button');
-        const forwardButton = getByTestId('forward-button');
+        // Apre la scheda impostazioni
+        fireEvent.press(getByText('⚙️'));
+        expect(getByText('Privacy Policy')).toBeTruthy();
 
-        expect(backButton.props.accessibilityState.disabled).toBe(true);
-        expect(forwardButton.props.accessibilityState.disabled).toBe(true);
-    });
+        // Apre la Privacy Policy nativa
+        fireEvent.press(getByText('Privacy Policy'));
+        expect(screen.getByTestId('privacy-title')).toBeTruthy();
+        expect(getByText(/In conformità con le normative vigenti \(GDPR\)/)).toBeTruthy();
 
-    it('I pulsanti Home e Refresh dovrebbero essere sempre attivi', () => {
-        const { getByTestId } = render(<App />);
+        // Torna alle impostazioni
+        fireEvent.press(getByText('❮ Indietro'));
+        expect(getByText('Termini e Condizioni')).toBeTruthy();
 
-        const homeButton = getByTestId('home-button');
-        const refreshButton = getByTestId('refresh-button');
-
-        expect(homeButton.props.accessibilityState?.disabled).not.toBe(true);
-        expect(refreshButton.props.accessibilityState?.disabled).not.toBe(true);
+        // Apre i Termini e Condizioni nativi
+        fireEvent.press(getByText('Termini e Condizioni'));
+        expect(screen.getByTestId('terms-title')).toBeTruthy();
+        expect(getByText(/Benvenuto su "Webview di Informatica per Tutti"/)).toBeTruthy();
     });
 });

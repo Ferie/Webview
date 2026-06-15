@@ -6,25 +6,46 @@ import {
     ActivityIndicator,
     BackHandler,
     Platform,
-    TouchableOpacity
+    TouchableOpacity,
+    Switch,
+    ScrollView
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { WebView, WebViewNavigation } from 'react-native-webview';
-import { styles } from '../styles/styles'; // Importazione degli stili separati
+import { WebView } from 'react-native-webview';
+import { createStyles, lightColors, darkColors } from '../styles/styles';
 
-const HOME_URL = 'https://ferie.altervista.org/';
+const HOME_URL = 'https://ferie.altervista.org/wordpress/';
+
+// Definiamo i quattro possibili stati della schermata
+type TabType = 'browser' | 'settings' | 'privacy' | 'terms';
+type ThemeType = 'light' | 'dark';
 
 export default function App() {
     const webViewRef = useRef<WebView>(null);
+    const [currentTab, setCurrentTab] = useState<TabType>('browser');
+    const [theme, setTheme] = useState<ThemeType>('light');
     const [canGoBack, setCanGoBack] = useState<boolean>(false);
     const [canGoForward, setCanGoForward] = useState<boolean>(false);
 
-    // Gestione tasto indietro per Android
-    // Sostituisci il vecchio useEffect con questo:
+    const currentColors = theme === 'light' ? lightColors : darkColors;
+    const styles = createStyles(currentColors);
+
+    // Gestione della pulizia nativa del tasto indietro (Android)
     useEffect(() => {
         if (Platform.OS === 'android') {
             const onBackPress = (): boolean => {
-                if (webViewRef.current && canGoBack) {
+                // Se siamo nelle sotto-pagine legali, torna alle impostazioni
+                if (currentTab === 'privacy' || currentTab === 'terms') {
+                    setCurrentTab('settings');
+                    return true;
+                }
+                // Se siamo nelle impostazioni, torna al browser
+                if (currentTab === 'settings') {
+                    setCurrentTab('browser');
+                    return true;
+                }
+                // Se siamo nel browser e si può andare indietro nella cronologia del sito
+                if (webViewRef.current && canGoBack && currentTab === 'browser') {
                     webViewRef.current.goBack();
                     return true;
                 }
@@ -37,88 +58,188 @@ export default function App() {
             // La funzione di pulizia ora usa .remove() direttamente sulla sottoscrizione
             return () => subscription.remove();
         }
-    }, [canGoBack]);
+    }, [canGoBack, currentTab]);
 
+    // JAVASCRIPT INJECTION: Rimuove pubblicità e riferimenti ad Altervista
     const injectedJavaScript = `
-    document.body.style.webkitUserSelect = 'none';
+    (function() {
+      const cleanup = () => {
+        // ID e Classi tipiche dei banner pubblicitari e del footer di Altervista
+        const selectors = [
+          '#av-footer', '.av-footer', 
+          '#alexa-widget', '.altervista-banner', 
+          'iframe[id*="google_ads"]', '.adsbygoogle',
+          '#av_banner', '.av_sidebar_banner'
+        ];
+        
+        selectors.forEach(selector => {
+          const elements = document.querySelectorAll(selector);
+          elements.forEach(el => {
+            el.style.display = 'none';
+            el.style.pointerEvents = 'none';
+          });
+        });
+
+        // Previene la selezione del testo per dare un feeling più nativo
+        document.body.style.webkitUserSelect = 'none';
+      };
+
+      // Esegui subito all'avvio
+      cleanup();
+      
+      // Esegui a intervalli regolari per intercettare banner caricati in differita
+      setInterval(cleanup, 1000);
+    })();
     true;
   `;
-
-    // Funzioni di navigazione della barra inferiore
-    const handleGoBack = () => webViewRef.current?.goBack();
-    const handleGoForward = () => webViewRef.current?.goForward();
-    const handleReload = () => webViewRef.current?.reload();
-    const handleGoHome = () => {
-        webViewRef.current?.injectJavaScript(`window.location.href = '${HOME_URL}';`);
-    };
-
-    const handleNavigationStateChange = (navState: WebViewNavigation) => {
-        setCanGoBack(navState.canGoBack);
-        setCanGoForward(navState.canGoForward);
-    };
 
     return (
         <SafeAreaProvider>
             <SafeAreaView style={styles.container}>
-                <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-
-                <WebView
-                    ref={webViewRef}
-                    source={{ uri: HOME_URL }}
-                    style={styles.webview}
-                    incognito={false}
-                    domStorageEnabled={true}
-                    sharedCookiesEnabled={true}
-                    thirdPartyCookiesEnabled={true}
-                    injectedJavaScript={injectedJavaScript}
-                    onNavigationStateChange={handleNavigationStateChange}
-                    startInLoadingState={true}
-
-                    renderLoading={() => (
-                        <View style={styles.loadingContainer} testID="loading-spinner">
-                            <ActivityIndicator size="large" color="#0071e3" />
-                        </View>
-                    )}
-
-                    renderError={() => (
-                        <View style={styles.errorContainer} testID="error-container">
-                            <Text style={styles.errorTitle}>Ops! Qualcosa è andato storto</Text>
-                            <Text style={styles.errorText}>Assicurati di essere connesso a Internet e riprova.</Text>
-                            <TouchableOpacity
-                                style={styles.retryButton}
-                                onPress={handleReload}
-                                testID="retry-button"
-                            >
-                                <Text style={styles.retryButtonText}>Riprova</Text>
-                            </TouchableOpacity>
-                        </View>
-                    )}
+                <StatusBar
+                    barStyle={theme === 'light' ? 'dark-content' : 'light-content'}
+                    backgroundColor={currentColors.background}
                 />
 
-                {/* BARRA DI NAVIGAZIONE */}
-                <View style={styles.navBar} testID="nav-bar">
+                {/* TAB 1: BROWSER WEB (CON INIEZIONE JS) */}
+                {currentTab === 'browser' && (
+                    <WebView
+                        ref={webViewRef}
+                        source={{ uri: HOME_URL }}
+                        style={styles.webview}
+                        incognito={false}
+                        domStorageEnabled={true}
+                        sharedCookiesEnabled={true}
+                        thirdPartyCookiesEnabled={true}
+                        injectedJavaScript={injectedJavaScript} // Attivazione dello script di pulizia
+                        onNavigationStateChange={(navState) => {
+                            setCanGoBack(navState.canGoBack);
+                            setCanGoForward(navState.canGoForward);
+                        }}
+                        startInLoadingState={true}
+                        renderLoading={() => (
+                            <View style={styles.loadingContainer}>
+                                <ActivityIndicator size="large" color={currentColors.accent} />
+                            </View>
+                        )}
+                        renderError={() => (
+                            <View style={styles.errorContainer}>
+                                <Text style={styles.errorTitle}>Ops! Errore di connessione</Text>
+                                <TouchableOpacity style={styles.retryButton} onPress={() => webViewRef.current?.reload()}>
+                                    <Text style={styles.retryButtonText}>Riprova</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    />
+                )}
+
+                {/* TAB 2: IMPOSTAZIONI PRINCIPALI */}
+                {currentTab === 'settings' && (
+                    <ScrollView style={styles.settingsContent}>
+                        <Text style={styles.settingsTitle}>Impostazioni</Text>
+
+                        <View style={styles.sectionCard}>
+                            <Text style={styles.sectionTitle}>Aspetto</Text>
+                            <View style={styles.row}>
+                                <Text style={styles.rowText}>Tema Scuro</Text>
+                                <Switch
+                                    value={theme === 'dark'}
+                                    onValueChange={(value) => setTheme(value ? 'dark' : 'light')}
+                                    trackColor={{ false: '#767577', true: currentColors.accent }}
+                                    thumbColor={Platform.OS === 'android' ? '#ffffff' : undefined}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.sectionCard}>
+                            <Text style={styles.sectionTitle}>Note Legali</Text>
+                            <TouchableOpacity style={[styles.row, styles.rowBorder]} onPress={() => setCurrentTab('privacy')}>
+                                <Text style={styles.rowText}>Privacy Policy</Text>
+                                <Text style={styles.linkText}>Visualizza 〉</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.row} onPress={() => setCurrentTab('terms')}>
+                                <Text style={styles.rowText}>Termini e Condizioni</Text>
+                                <Text style={styles.linkText}>Visualizza 〉</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.sectionCard}>
+                            <Text style={styles.sectionTitle}>Informazioni</Text>
+                            <View style={[styles.row, styles.rowBorder]}>
+                                <Text style={styles.rowText}>Applicazione</Text>
+                                <Text style={[styles.rowText, { color: currentColors.subText }]}>Ferie Blog App</Text>
+                            </View>
+                            <View style={styles.row}>
+                                <Text style={styles.rowText}>Sito Web</Text>
+                                <Text style={[styles.rowText, { color: currentColors.subText }]}>ferie.altervista.org</Text>
+                            </View>
+                        </View>
+                        <Text style={styles.versionText}>Versione 1.0.0 (Build 1)</Text>
+                    </ScrollView>
+                )}
+
+                {/* PAGINA NATIVA PRIVACY POLICY */}
+                {currentTab === 'privacy' && (
+                    <ScrollView style={styles.settingsContent}>
+                        <TouchableOpacity style={{ marginBottom: 15 }} onPress={() => setCurrentTab('settings')}>
+                            <Text style={{ color: currentColors.accent, fontSize: 16 }}>❮ Indietro</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.settingsTitle} testID="privacy-title">Privacy Policy</Text>
+                        <View style={styles.sectionCard}>
+                            <Text style={[styles.rowText, { lineHeight: 22 }]}>
+                                In conformità con le normative vigenti (GDPR), questa applicazione mobile denominata "Webview di Informatica per Tutti" è configurata esclusivamente come contenitore in modalità WebView per mostrare i contenuti del blog di informazione personale.{"\n\n"}
+                                <Text style={{ fontWeight: 'bold' }}>1. Trattamento dei dati: </Text>
+                                L'applicazione in sé, nella sua componente nativa scaricata sul dispositivo, NON raccoglie, NON memorizza e NON trasmette a server terzi alcun dato personale dell'utente (come posizione geografica, contatti, ID univoci del telefono o dati di utilizzo).{"\n\n"}
+                                <Text style={{ fontWeight: 'bold' }}>2. Navigazione Web: </Text>
+                                Trattandosi di una WebView, la navigazione all'interno del blog segue le medesime policy di trattamento dei dati e gestione dei Cookie del sito web di origine, gestito tramite la piattaforma e i servizi esterni (come la cookie policy ufficiale registrata tramite Iubenda per il sito <i>https://ferie.altervista.org</i> che è possibile consultare al seguente indirizzo <i>https://www.iubenda.com/privacy-policy/941164</i>).
+                            </Text>
+                        </View>
+                    </ScrollView>
+                )}
+
+                {/* PAGINA NATIVA TERMINI E CONDIZIONI */}
+                {currentTab === 'terms' && (
+                    <ScrollView style={styles.settingsContent}>
+                        <TouchableOpacity style={{ marginBottom: 15 }} onPress={() => setCurrentTab('settings')}>
+                            <Text style={{ color: currentColors.accent, fontSize: 16 }}>❮ Indietro</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.settingsTitle} testID="terms-title">Termini e Condizioni</Text>
+                        <View style={styles.sectionCard}>
+                            <Text style={[styles.rowText, { lineHeight: 22 }]}>
+                                Benvenuto su "Webview di Informatica per Tutti". L'accesso e l'uso di questa applicazione sono regolati dai presenti Termini e Condizioni.{"\n\n"}
+                                <Text style={{ fontWeight: 'bold' }}>1. Diritti d'autore: </Text>
+                                Tutti i testi, gli articoli, le immagini e i contenuti presenti e visualizzati all'interno dell'applicazione appartengono al titolare del blog ferie.altervista.org e sono protetti dalle leggi sul diritto d'autore. È vietata la riproduzione anche parziale senza autorizzazione.{"\n\n"}
+                                <Text style={{ fontWeight: 'bold' }}>2. Limitazione di responsabilità: </Text>
+                                I contenuti pubblicati hanno carattere puramente informativo ed editoriale. Lo sviluppatore e il titolare del blog non si assumono alcuna responsabilità per errori, omissioni o per l'uso improprio delle informazioni lette.{"\n\n"}
+                                <Text style={{ fontWeight: 'bold' }}>3. Modifiche: </Text>
+                                Il titolare si riserva il diritto di modificare i contenuti del blog e i presenti termini in qualsiasi momento e senza preavviso.
+                            </Text>
+                        </View>
+                    </ScrollView>
+                )}
+
+                {/* BARRA DI NAVIGAZIONE INFERIORE */}
+                <View style={styles.navBar}>
                     <TouchableOpacity
-                        style={[styles.navButton, !canGoBack && styles.disabledButton]}
-                        disabled={!canGoBack}
-                        onPress={handleGoBack}
-                        testID="back-button"
+                        style={[styles.navButton, (!canGoBack || currentTab !== 'browser') && styles.disabledButton]}
+                        disabled={!canGoBack || currentTab !== 'browser'}
+                        onPress={() => webViewRef.current?.goBack()}
                     >
                         <Text style={styles.navButtonText}>◀</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.navButton} onPress={handleGoHome} testID="home-button">
-                        <Text style={styles.navButtonText}>🏠</Text>
+                    <TouchableOpacity style={styles.navButton} onPress={() => setCurrentTab('browser')}>
+                        <Text style={currentTab === 'browser' ? styles.activeNavButtonText : styles.navButtonText}>🌐</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.navButton} onPress={handleReload} testID="refresh-button">
-                        <Text style={styles.navButtonText}>🔄</Text>
+                    <TouchableOpacity style={styles.navButton} onPress={() => setCurrentTab('settings')}>
+                        <Text style={(currentTab === 'settings' || currentTab === 'privacy' || currentTab === 'terms') ? styles.activeNavButtonText : styles.navButtonText}>⚙️</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[styles.navButton, !canGoForward && styles.disabledButton]}
-                        disabled={!canGoForward}
-                        onPress={handleGoForward}
-                        testID="forward-button"
+                        style={[styles.navButton, (!canGoForward || currentTab !== 'browser') && styles.disabledButton]}
+                        disabled={!canGoForward || currentTab !== 'browser'}
+                        onPress={() => webViewRef.current?.goForward()}
                     >
                         <Text style={styles.navButtonText}>▶</Text>
                     </TouchableOpacity>

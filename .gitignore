@@ -38,6 +38,9 @@ yarn-error.*
 
 example
 
+# bug reports
+bugreport*
+
 # generated native folders
 /ios
 /android

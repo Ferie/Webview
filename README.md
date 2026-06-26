@@ -1,56 +1,87 @@
-# Welcome to your Expo app 👋
+# Informatica per Tutti - WebView Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Benvenuto nel repository ufficiale di **Informatica per Tutti**, un'applicazione mobile nativa sviluppata con **React Native** ed **Expo (SDK 56)**. 
 
-## Get started
+L'applicazione è progettata come un contenitore WebView ottimizzato per incapsulare e mostrare in modo fluido, sicuro e performante i contenuti del blog ufficiale [ferie.altervista.org](https://ferie.altervista.org/wordpress/).
 
-1. Install dependencies
+## 📱 Caratteristiche Principali
 
-    ```bash
+- **WebView Avanzata**: Integrazione completa del blog con abilitazione di DOM Storage, cache e supporto cookie condivisi.
+- **Iniezione JavaScript Dinamica**: Uno script personalizzato rimuove automaticamente banner pubblicitari invadenti e i riferimenti/footer della piattaforma di hosting di Altervista all'avvio dell'app per garantire un look pulito e 100% proprietario.
+- **Gestione del Tema (Chiaro/Scuro)**: Un'impostazione nativa permette di switchare l'interfaccia dell'app (barra di navigazione, schermate info e sfondi di sistema) tra Light Mode e Dark Mode.
+- **Pagine Legali Native In-App**: Schermate integrate per la *Privacy Policy* (conforme GDPR e coordinata con la policy Iubenda del sito) e i *Termini e Condizioni*, eliminando rallentamenti e garantendo la piena approvazione su Google Play Store e Apple App Store.
+- **Gestione Hardware Back**: Integrazione nativa del tasto indietro di Android per navigare la cronologia dei link del blog prima di uscire dall'app.
+- **Unit Testing Robusto**: Suite di test automatizzata con **Jest** e `@testing-library/react-native` che fa uso dell'oggetto `screen` e di asserzioni tramite `testID` per validare le rotte legali e lo stato dei componenti.
+
+## 🛠️ Tecnologie Utilizzate
+
+- **React Native** (v0.85) & **Expo SDK 56**
+- **TypeScript** per la tipizzazione statica del codice
+- **React Native WebView** per il motore di rendering web
+- **Jest** & **React Native Testing Library** per i test di regressione
+
+## 📂 Struttura del Progetto
+
+```text
+Webview/
+├── assets/                  # Icone di sistema e Splash Screen dell'app
+├── src/
+│   ├── app/
+│   │   └── index.tsx        # Entry point dell'applicazione (Interfaccia e Logica)
+│   └── styles/
+│       └── styles.ts        # Palette colori e stili dinamici (Light/Dark)
+├── __tests__/
+│   └── App.test.tsx         # Unit test automatizzati per Jest
+├── app.json                 # Configurazione nativa Expo (Splash Screen e Meta)
+├── jest.config.js           # Configurazione dell'ambiente di test
+└── package.json             # Dipendenze e script npm
+```
+
+## 🚀 Come Avviare il Progetto in Locale
+Prerequisiti
+Assicurati di avere installato Node.js e l'applicazione Expo Go sul tuo smartphone (iOS o Android).
+
+1. Clona il repository:
+
+    ```Bash
+    git clone [https://github.com/Ferie/Webview.git](https://github.com/Ferie/Webview.git)
+    cd Webview
+    ```
+
+2. Installa le dipendenze:
+
+    ```Bash
     npm install
     ```
 
-2. Start the app
+3. Avvia il server di sviluppo pulendo la cache:
 
-    ```bash
-    npx expo start
+    ```Bash
+    npx expo start -c
     ```
 
-In the output, you'll find options to open the app in a
+4. Avvia sui simulatori o dispositivi fisici:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+    - Premi a nel terminale per aprire l'emulatore Android Studio.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+    - Premi i nel terminale per aprire il simulatore iOS (Xcode).
 
-## Get a fresh project
+    - Inquadra il codice QR generato nel terminale con la fotocamera (iOS) o con l'app Expo Go (Android).
 
-When you're ready, run:
+## 🧪 Esecuzione dei Test
+I test sono configurati per verificare la stabilità dell'applicazione, il comportamento dei pulsanti della barra inferiore e la corretta apertura delle pagine legali.
 
-```bash
-npm run reset-project
+Per lanciare la suite di test in modalità interattiva (Watch Mode):
+
+```Bash
+npm run test
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Se apporti modifiche strutturali ai testi legali e hai bisogno di aggiornare o generare nuovamente gli snapshot di Jest, esegui:
 
-### Other setup steps
+```Bash
+npx jest -u
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## ⚖️ Note sulla Conformità per gli Store
+L'applicazione è configurata per superare i controlli della linea guida Apple 4.2.2 (Minimum Functionality) grazie a un'interfaccia di navigazione nativa circostante, un sistema di gestione aspetto e pagine informative interamente scritte nel codice dell'app.

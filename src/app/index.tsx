@@ -61,35 +61,85 @@ export default function App() {
         }
     }, [canGoBack, currentTab]);
 
-    // JAVASCRIPT INJECTION: Rimuove pubblicità e riferimenti ad Altervista
+    // JAVASCRIPT INJECTION: Rimuove pubblicità, note legali e altri riferimenti ad Altervista da pagina, menu laterale e widget salvando i bottoni Social
     const injectedJavaScript = `
-    (function() {
-      const cleanup = () => {
-        // ID e Classi tipiche dei banner pubblicitari e del footer di Altervista
-        const selectors = [
-          '#av-footer', '.av-footer', 
-          '#alexa-widget', '.altervista-banner', 
-          'iframe[id*="google_ads"]', '.adsbygoogle',
-          '#av_banner', '.av_sidebar_banner'
-        ];
-        
-        selectors.forEach(selector => {
-          const elements = document.querySelectorAll(selector);
-          elements.forEach(el => {
-            el.style.display = 'none';
-            el.style.pointerEvents = 'none';
-          });
-        });
+    (function () {
+        const cleanup = () => {
+            // Rimozione banner pubblicitari e i widget invasivi
+            const globalAds = [
+                '#av-footer',
+                '.av-footer',
+                '.altervista-banner',
+                '#alexa-widget',
+                'iframe[id*="google_ads"]',
+                '.adsbygoogle'
+            ];
 
-        // Previene la selezione del testo per dare un feeling più nativo
-        document.body.style.webkitUserSelect = 'none';
-      };
+            globalAds.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    el.style.setProperty('display', 'none', 'important');
+                });
+            });
 
-      // Esegui subito all'avvio
-      cleanup();
-      
-      // Esegui a intervalli regolari per intercettare banner caricati in differita
-      setInterval(cleanup, 1000);
+            // Scansione dei soli nodi di testo per eliminare i link di Altervista
+            const walkTextNodes = (node) => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const text = node.nodeValue.trim();
+
+                    // Controllo del testo esatto presente nei link del footer del tema di Altervista
+                    if (
+                        text.includes('Altervista') ||
+                        text.includes('Apri un sito') ||
+                        text.includes('Segnala abuso') ||
+                        text.includes('Disclaimer') ||
+                        text.includes('Gestisci preferenze') ||
+                        text.includes('Tema Seamless') ||
+                        text.includes('Privacy Policy')
+                    ) {
+                        // Trova il tag genitore e lo nasconde completamente
+                        if (node.parentNode && node.parentNode.style) {
+                            // Rimuove l'elemento solo se si trova nel footer per evitare di nascondere testo utile agli articoli
+                            const isInsideFooter = node.parentNode.closest('footer, .site-info, .footer-copy, aside, .sidebar-footer');
+
+                            if (isInsideFooter || text.includes('Privacy Policy') || text.includes('Disclaimer')) {
+                                node.parentNode.style.setProperty('display', 'none', 'important');
+                                node.parentNode.style.setProperty('pointer-events', 'none', 'important');
+                            }
+                        }
+                    }
+
+                    // Pulizia dei trattini separatore "·" o "-"
+                    if ((text === '·' || text === '-' || text === '|') && node.parentNode) {
+                        const parentText = node.parentNode.textContent || '';
+                        if (parentText.includes('Disclaimer') || parentText.includes('Segnala abuso') || parentText.includes('Privacy Policy')) {
+                            node.nodeValue = '';
+                        }
+                    }
+                } else {
+                    // Evitia il blocco dei bottoni social
+                    if (node instanceof HTMLElement && (node.className.includes('social') || node.className.includes('sharedaddy') || node.className.includes('share'))) {
+                        return;
+                    }
+
+                    for (let child of node.childNodes) {
+                        walkTextNodes(child);
+                    }
+                }
+            };
+
+            if (document.body) {
+                walkTextNodes(document.body);
+            }
+
+            // Blocco della selezione del testo
+            document.body.style.webkitUserSelect = 'none';
+            document.body.style.userSelect = 'none';
+        };
+
+        // Controllo continuo per non impattare sulle prestazioni
+        cleanup();
+        setInterval(cleanup, 400);
     })();
     true;
   `;

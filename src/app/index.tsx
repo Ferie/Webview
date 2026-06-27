@@ -242,7 +242,10 @@ export default function App() {
                                 <Text style={{ fontWeight: 'bold' }}>1. Trattamento dei dati: </Text>
                                 L'applicazione in sé, nella sua componente nativa scaricata sul dispositivo, NON raccoglie, NON memorizza e NON trasmette a server terzi alcun dato personale dell'utente (come posizione geografica, contatti, ID univoci del telefono o dati di utilizzo).{"\n\n"}
                                 <Text style={{ fontWeight: 'bold' }}>2. Navigazione Web: </Text>
-                                Trattandosi di una WebView, la navigazione all'interno del blog segue le medesime policy di trattamento dei dati e gestione dei Cookie del sito web di origine, gestito tramite la piattaforma e i servizi esterni (come la cookie policy ufficiale registrata tramite Iubenda per il sito <i>https://ferie.altervista.org</i> che è possibile consultare al seguente indirizzo <i>https://www.iubenda.com/privacy-policy/941164</i>).
+                                Trattandosi di una WebView, la navigazione all'interno del blog segue le medesime policy di trattamento dei dati e gestione dei Cookie del sito web di origine, gestito tramite la piattaforma e i servizi esterni (come la cookie policy ufficiale registrata tramite Iubenda per il sito{" "}
+                                <Text style={{ fontStyle: 'italic' }}>https://ferie.altervista.org</Text>
+                                {" "}che è possibile consultare al seguente indirizzo{" "}
+                                <Text style={{ fontStyle: 'italic' }}>https://www.iubenda.com/privacy-policy/941164</Text>).
                             </Text>
                         </View>
                     </ScrollView>

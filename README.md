@@ -2,7 +2,7 @@
 
 Benvenuto nel repository ufficiale di **Informatica per Tutti**, un'applicazione mobile nativa sviluppata con **React Native** ed **Expo (SDK 56)**. 
 
-L'applicazione è progettata come un contenitore WebView ottimizzato per incapsulare e mostrare in modo fluido, sicuro e performante i contenuti del blog ufficiale [ferie.altervista.org](https://ferie.altervista.org/wordpress/).
+L'applicazione è progettata come un contenitore WebView ottimizzato per incapsulare e mostrare in modo fluido, sicuro e performante i contenuti del blog ufficiale [IPT - Informatica per Tutti](https://ferie.altervista.org/wordpress/).
 
 ## 📱 Caratteristiche Principali
 

@@ -85,3 +85,6 @@ npx jest -u
 
 ## ⚖️ Note sulla Conformità per gli Store
 L'applicazione è configurata per superare i controlli della linea guida Apple 4.2.2 (Minimum Functionality) grazie a un'interfaccia di navigazione nativa circostante, un sistema di gestione aspetto e pagine informative interamente scritte nel codice dell'app.
+
+## 📄 Licenza
+Questo progetto è di proprietà esclusiva di Riccardo Andreatta in quanto titolare del blog **Informatica per tutti** ([https://ferie.altervista.org/wordpress/](https://ferie.altervista.org/wordpress/)). Il codice viene rilasciato a scopo puramente illustrativo e di consultazione. È vietata la riproduzione, la duplicazione o la ridistribuzione commerciale senza autorizzazione.
